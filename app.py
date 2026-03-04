@@ -12,7 +12,7 @@ from functools import wraps
 
 app = Flask(__name__)
 CORS(app)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///pictochat.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'sqlite:////app/data/pictochat.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY') or secrets.token_hex(32)
 
@@ -21,7 +21,7 @@ jwt = JWTManager(app)
 
 api = Api(app, version='1.0', title='Pictochat API', doc='/swagger', prefix='/api')
 
-logging.basicConfig(filename='audit.log', level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s')
+logging.basicConfig(filename=os.environ.get('AUDIT_LOG_PATH') or '/app/logs/audit.log', level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s')
 
 class ApiKey(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -226,7 +226,7 @@ def chat_delete(message_id):
         return {'message': 'Eliminado'}, 200
     except Exception as e:
         logging.error(f"Error deleting message {message_id}: {e}")
-        return {'message': 'Internal server error'}, 500
+        return {'message': 'Internal server error'}, 404
 
 @app.errorhandler(404)
 def not_found(error):
